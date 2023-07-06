@@ -20,6 +20,7 @@
       <link rel="stylesheet" href="assets/css/hope-ui.min.css?v=2.0.0" />
 
       <!-- Custom Css -->
+      <link rel="stylesheet" href="assets/css/custom.css?v=1.0.0" />
       <link rel="stylesheet" href="assets/css/custom.min.css?v=2.0.0" />
 
       <!-- Dark Css -->
@@ -31,16 +32,18 @@
       <!-- RTL Css -->
       <link rel="stylesheet" href="assets/css/rtl.min.css"/>
 
-
 			<!-- underscrore -->
 			<script type="text/javascript" src= "/assetsadmin/js/underscore.js"></script>
 			<!-- jquery -->
 			<script src="/assetsadmin/js/jquery.min.js"></script>
 			<script src="/assetsadmin/js/jquery_v3.6.0.min.js"></script>
+			<!-- <script src="https://code.jquery.com/jquery-2.2.4.min.js" ></script> -->
 			<script src="/assetsadmin/js/jquery.serializejson.js"></script>
 
 			<!-- knockout -->
-			<script src="/assetsadmin/knockout/knockout-3.1.0.js"></script>
+			<!-- https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js -->
+			<!-- <script src="/assetsadmin/knockout/knockout_3.4.2.js"></script> -->
+			<script src="https://ajax.aspnetcdn.com/ajax/knockout/knockout-3.5.0.js"></script>
 			<script src="/assetsadmin/knockout/knockout.mapping-latest.js"></script>
 			<script src="/assetsadmin/knockout/knockout-file-bindings.js"></script>
 			<link href="/assetsadmin/knockout/knockout-file-bindings.css">
@@ -55,7 +58,6 @@
       <script src="/assetsadmin/alert/sweetalert.min.js"></script>
 
 			<script>
-
 				var model = {
 					Processing: ko.observable(true),
 					ProcessingContent: ko.observable(false),
@@ -63,7 +65,10 @@
 					CheckId: ko.observable(false),
 					changeRupiah: ko.observable(''),
 					URI_PAGE: 4, // setup uri access on pages.
-					CheckValue: ko.observable(true),
+					CheckValue: ko.observable(false),
+					errorMessage: ko.observable('This field is required!'),
+					notAllowedMessage: ko.observable('Email Not Allowed!'),
+					acceptMessage: ko.observable('Email is allowed.'),
 					giftWrap: ko.observable(true),
 				}
 
@@ -84,12 +89,24 @@
 
 
   </head>
-  <body class="  ">
-    <!-- loader Start -->
-    <div id="loading">
-      <div class="loader simple-loader">
-          <div class="loader-body"></div>
-      </div>    </div>
+  <body class="light theme-default theme-with-animation card-default theme-color-default">
+	<!-- loader Start -->
+	<div data-bind="visible: model.Processing() == true">
+		<div class="loader simple-loader animate__animated animate__fadeOut d-block">
+		<div class="loader-body">
+			<img src="assets/images/loader.webp" alt="loader" class="light-loader img-fluid w-25" width="200" height="200">
+		</div>
+		</div>
+	</div>
+ 
+
+
+	<!-- <div class="preloader" style="background-color: white; opacity: 0.9;" data-bind='visible: model.Processing()==true' >
+		<div class="loading text-center" >
+			<span class="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+		</div>
+	</div> -->
+
     <!-- loader END -->
 
 	<script>

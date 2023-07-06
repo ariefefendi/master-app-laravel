@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
@@ -13,21 +12,11 @@ use App\Http\Controllers\ProductController;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
 Route::get('/', function () {
     return view('welcome');
 });
-
-
-// products
-// Route::resource('product', ProductController::class);
-// Route::resource('product/show', ProductController::class);
-// Route::resource('product/show/edit', ProductController::class);
-// Route::resource('product/update', ProductController::class);
-// Route::resource('product/save', ProductController::class);
-// Route::resource('product/create_data', ProductController::class);
-
-
+// Route::get('product/filterHobies', [ProductController::class, 'filterHobies']);
+// Product Controller
 Route::controller(ProductController::class)->group(function () {
     Route::get('product', 'index');
     Route::post('product/getDataAll', 'getDataAll');
@@ -35,5 +24,7 @@ Route::controller(ProductController::class)->group(function () {
     Route::post('product/Insert', 'Insert');
     Route::put('product/Update', 'Update');
     Route::delete('product/destroy', 'destroy');
-    Route::get('product/functionSelect', 'functionSelect');
+    Route::get('product/selectHobies', 'selectHobies');
 });
+
+// ...

@@ -10,6 +10,28 @@
   outline: none;
 }
 
+/* for alert from field input */
+.error {
+  width: 100%;
+  margin-top: .25rem;
+  font-size: 0.875em;
+  color: #f16a1bc2;
+}
+.warning{
+    width: 100%;
+      margin-top: .25rem;
+      font-size: 0.875em;
+      color: #ff7b2f;
+}
+.success{
+  width: 100%;
+    margin-top: .25rem;
+    font-size: 0.875em;
+    color: #05e62b;
+  }
+
+/* end */
+
 hr {
   margin: 1rem 0;
   color: inherit;

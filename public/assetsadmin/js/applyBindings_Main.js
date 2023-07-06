@@ -116,7 +116,7 @@ ko.bindingHandlers.checkValue = {
 	init: function (element, valueAccessor) {
 		$(element).on("keyup", function (e) {
 			var checkvalue = $(element).val();
-
+			 
 			if(checkvalue == "" ){
 				model.CheckValue(true);
 				$(element).addClass('error');
@@ -147,6 +147,93 @@ ko.bindingHandlers.slideVisible = {
 // <div data-bind="slideVisible: model.giftWrap, slideDuration:600">You have selected the option</div>
 // <label><input type="checkbox" data-bind="checked: model.giftWrap" /> Gift wrap</label>
 
+ko.bindingHandlers.validate = {
+            init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+                var valueObservable = valueAccessor();
+                var errorObservable = ko.observable('');
+                // Subscribe to changes in the value
+                ko.computed(function () {
+                    var value = valueObservable();
+					var error = '';
+                    // Perform validation 
+					if (value.trim() == '' || value == 0) {
+						error = 'This field is required.';
+						// Apply the error observable to the element
+					}
+                    // Update the error observable
+                    errorObservable(error);
+                });
+                // Store the error observable in the valueAccessor for access in the parent view model
+                valueObservable.error = errorObservable;
+            }
+};
+// ko.extenders.getData = function (target, options) {
+//   var url = options.url;
+//   // Define a function to retrieve data from the specified URL
+//   var fetchData = function () {
+//     // Make an AJAX request or fetch data from the server using the provided URL
+//     // For simplicity, let's assume we're using jQuery's AJAX function here
+//     $.ajax({
+//       url: url,
+//       type: 'GET',
+//       success: function (response) {
+//         // Update the target observable with the fetched data
+//         target(response);
+//       },
+//       error: function (error) {
+//         // Handle error if needed
+//         console.error('Error fetching data:', error);
+//       }
+//     });
+//   };
+//   // Perform the initial data retrieval
+//   fetchData();
+//   // Add a function to the target observable to allow manual data refreshing
+//   target.refreshData = function () {
+//     fetchData();
+//   };
+//   return target;
+// };
+// ko.extenders.dataExtender = function (target, options) {
+//   // Define the function to retrieve data
+//   function fetchData() {
+//     // Simulating asynchronous data retrieval
+//     setTimeout(function () {
+//       var data = options.data; // Retrieve data from options
+      
+//       // Update the observable with the retrieved data
+//       target(data);
+//     }, 1000);
+//   }
+
+//   // Extend the observable with the fetchData function
+//   target.fetchData = fetchData;
+
+//   // Automatically fetch data when the observable is accessed
+//   target.fetchData();
+
+//   return target;
+// };
+// ko.extenders.getData = function (target, options) {
+//   // Define a function to fetch data from an API or any other source
+//   function fetchData() {
+//     // Simulating asynchronous data retrieval
+//     setTimeout(function () {
+//       var data = options.data; // Retrieve data from the options object
+//       target(data); // Set the value of the observable with the retrieved data
+//     }, 1000);
+//   }
+
+//   // Subscribe to changes on the observable
+//   target.subscribe(function (newValue) {
+//     if (newValue === null || newValue === undefined) {
+//       fetchData(); // Fetch data if the observable is null or undefined
+//     }
+//   });
+
+//   // Return the modified observable
+//   return target;
+// };
 model.activetab = function(index) {
 	$("#tabnavform > li").removeClass("current");
 	$("#tabnavform li>.nav-link").removeClass("active");
@@ -165,10 +252,10 @@ model.activetab = function(index) {
 model.sidebar = function(index) {
 	$("#sidebar-menu li>.nav-link").removeClass("active");
 	// $("#sidebar-menu li>.nav-link").attr({"aria-expanded":false});
-
 	$("#sidebar-menu li>.nav-link").eq(index).addClass("active");
 	// $("#sidebar-menu li>.nav-link").eq(index).attr({"aria-expanded":true});
 }
+
 function changeRupiah(angka){
 	var minus = false;
 	if (angka < 0) {

@@ -1,37 +1,54 @@
-@extends('admin_template')
-@section('content')
+	@extends('admin_template')
+	@section('content')
 <script>
 model.masterModel = {
-	id:"",
-	name:"",
-	price:"",
-	stock:"",
-	description:"",
-	MODE:"",
-	select:[],
-	idselect:"",
+	id: 0,
+	name: "",
+	price: '',
+	email: "",
+	stock: '',
+	hoby_id: 0,
+	hoby_name: 0,
+	description: "",
+	MODE: "",
+	select: [],
+	// idselect: 0,
 	SELECTFILTERVALUE: [{ name: 'NAME', value: 'name'},{name: 'STOCK', value: 'stock'}],
 }
 var material = {
 	url_dir: ko.observable('/product'),  /* location of Controller file */
 	Recordmaterial: ko.mapping.fromJS(model.masterModel),
 	Listmaterial: ko.observableArray([]),
+	// getSelectHobi: ko.observableArray([]).extend({ getData: '/product/selectHobies' }),
+	EmailError: ko.observable(''),
 	Mode: ko.observable(''),
+	status: ko.observable('Nothing'),
 	CREATEBY: ko.observable('CREATEBY'),
 	FilterText: ko.observable(""),
 	DataFilter: ko.observableArray(['judul']),
 	FilterValue: ko.observable("judul"),
 }
+
+//  ko.components.register('special-offer', {
+//     template: '<div class="offer-box" data-bind="text: productName"></div>'
+// });
+// <div data-bind='component: {
+//      name: "special-offer-callout",
+//      params: { productName: someProduct.name }
+// }'></div>
+
 material.back = function(tab){
 	material.Mode('');
 	material.grid.ajax.reload( null, true );
 	ko.mapping.fromJS(model.masterModel, material.Recordmaterial);
 	model.activetab(tab);
+	material.functionSelectHobies();
 }
 material.selectdata = function(id) {
-	material.back(0);
 	model.Processing(true);
+	material.back(0);
 	material.Mode("Update");
+	material.functionSelectHobies();
 	// console.log(id);
 	// var url = "http://127.0.0.1:8000/api/products/"+id+"";
 	// console.log(url);
@@ -51,7 +68,27 @@ material.selectdata = function(id) {
 	});
 }
 
+// fitur Validations field.
+material.validations = function(val) {
+	// Check if any of the fields have errors
+	checkField = [ 	val.name,
+				val.price,
+				val.stock,
+				val.email,
+				val.description
+			];
+	var hasErrors = checkField.some(function (field) { return field.error() !== ''; } );
+	if (hasErrors) { return false; }
+}
+// check email with regex Pettern.
+material.isValidEmail = ko.computed(function() {
+	var regexPattern = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+	var email = material.Recordmaterial.email();
+	return regexPattern.test(email);
+});
+
 material.save = function(){
+	// If return false form validation, than push notife on status.
 	model.Processing(true);
 	var val = material.Recordmaterial;
 	val.MODE(material.Mode());
@@ -64,12 +101,11 @@ material.save = function(){
 		showLoaderOnConfirm: true, /* button Yes*/
 	}, function () {
 		setTimeout(function(){
-			swal({ title: "Good job!",
-			text: "Operasi di terima!",
-			icon: "success", /* sukses simpan / update */
-		});
-	}, 2000);
+			swal({ title: "Good job!", text: "Status :"+material.status(), icon: "success", /* sukses simpan / update */});
+		}, 1000);
+
 	if (showLoaderOnConfirm=true) {
+		
 		if (material.Mode()=="Update") {
 			var url = material.url_dir()+"/Update"; // update
 			var method = "PUT";
@@ -77,20 +113,27 @@ material.save = function(){
 			var url = material.url_dir()+"/Insert"; // insert
 			var method = "POST";
 		}
-		$.ajax({
-			url: url,
-			method: method, // method: 'post' //GET, HEAD, PUT, PATCH, DELETE."
-			data : val,
-			success : function(res) {
-				var res = JSON.parse(res);
-				console.log(res);
-				material.back(1);
-				model.Processing(false); /* end proses simpan / update*/
-			}
-		});
+
+		// check valid || invalid before insert data
+		(material.validations(material.Recordmaterial) == false || material.isValidEmail() == false) ? 
+		 material.status('Please fix the errors before submitting the form.') :
+
+			$.ajax({
+				url: url,
+				method: method, // method: 'post' //GET, HEAD, PUT, PATCH, DELETE."
+				data : val,
+				success : function(res) {
+					var res = JSON.parse(res);
+					let status = res.result;
+					material.status(status);
+					// console.log(material.status());
+					material.back(1);
+					model.Processing(false); /* end proses simpan / update*/
+				}
+			});
 	}
 });
-model.Processing(false); /* for process cancel button  */
+	model.Processing(false); /* for process cancel button  */
 }
 
 material.remove = function(id){
@@ -126,9 +169,42 @@ material.remove = function(id){
 	});
 }
 
-material.functionSelect = function() {
-url = material.url_dir()+"/functionSelect";
-console.log(url);
+// function Select with Token Input FB
+// material.drawHobies = function() {
+//   $("input[name=hobiesToken]").tokenInput("http://localhost:8000/product/filterHobies", {
+//     zindex: 700,
+//     allowFreeTagging: false,
+//     placeholder: 'Search by name..!',
+//     tokenValue: 'name',
+//     propertyToSearch: "name",
+//     tokenLimit: 1,
+//     theme: "facebook",
+//     onAdd: function (item) {
+// 	  console.log(item);
+//       var po = material.Recordmaterial;
+//       po.hoby_id(item.id);
+//       po.hoby_name(item.name);
+//     },
+//     onDelete: function(item) {
+//       var po = material.Recordmaterial;
+//       po.hoby_id(0);
+//       po.hoby_name("");
+//     },
+//     resultsFormatter: function(item) {
+//       return "<li>"+item.name+"</li>";
+//     },
+//     onResult: function (results) {
+//       return results;
+//     },
+//     onCachedResult: function(res) {
+//       return res;
+//     }
+//   });
+// }
+
+// function Select Dropdown.
+material.functionSelectHobies = function() {
+url = material.url_dir()+"/selectHobies";
 $.ajax({
 		url: url,
 		type: 'GET',
@@ -141,7 +217,6 @@ $.ajax({
 		}
 	});
 }
-
 </script>
 
 
@@ -149,8 +224,8 @@ $.ajax({
 	<div class="row">
 		<div class="col-lg-12">
 			<div class="card   rounded">
-				<div class="card-body" data-bind="with:material">
 
+			<div class="card-body" data-bind="with:material">
 					<ul class="nav nav-tabs customtab" id="tabnavform" role="tablist">
 						<li class="nav-item" role="presentation">
 							<button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#tabform" type="button" role="tab" aria-controls="home" aria-selected="true">Form</button>
@@ -176,8 +251,7 @@ $.ajax({
 											</span>
 										</button>
 
-										<button data-bind="click:save, data-original-title:Mode" data-toggle="tooltip" data-placement="top" data-original-title="simpan" class="btn btn-icon btn-outline-success mr-1 mb-1">
-											<!-- <i class="bx bx-save"></i> -->
+										<button data-bind="click:save, data-original-title:Mode" type="submit" data-toggle="tooltip" data-placement="top" data-original-title="simpan" class="btn btn-icon btn-outline-success mr-1 mb-1">
 											<span class="icon">
 												<svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 													<path fill-rule="evenodd" clip-rule="evenodd" d="M14.7366 2.76175H8.08455C6.00455 2.75375 4.29955 4.41075 4.25055 6.49075V17.3397C4.21555 19.3897 5.84855 21.0807 7.89955 21.1167C7.96055 21.1167 8.02255 21.1167 8.08455 21.1147H16.0726C18.1416 21.0937 19.8056 19.4087 19.8026 17.3397V8.03975L14.7366 2.76175Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -202,62 +276,85 @@ $.ajax({
 									</div>
 								</div>
 							</div>
+ 
+							<!-- loader Processing Content -->
+							<div class="bd-example" data-bind="visible: model.Processing() == true">
+								<button class="btn btn-primary" type="button" disabled>
+									<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+									Loading...
+								</button>
+							</div>
 
 							<!-- FORM -->
 							<div class="form form-vertical" >
 								<div class="form-body">
-									<div class="row" data-bind="with:Recordmaterial" >
-
+									<div class="row" data-bind="with: Recordmaterial">
 										<div class="col-md-6 col-12">
 											<div class="form-group">
 												<label for="first-name-vertical">name</label>
-												<input type="text" name="txtname" data-bind="value: name" id="" required="" class="form-control">
+												<input type="text" name="txtname" data-bind="value: name, validate: name" class="form-control">
+												<div class="error" data-bind="text: name.error, visible: name.error"></div>
 											</div>
 										</div>
-
+										<div class="col-md-6 col-12">
+											<div class="form-group">
+												<label for="first-name-vertical">email</label>
+												<input type="text" name="txtemail" data-bind="value: email, validate: email, valueUpdate: 'afterkeydown', regex: /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/" class="form-control">
+												<div class="warning" data-bind="text: model.notAllowedMessage, visible: material.isValidEmail() == false"></div>
+												<div class="success" data-bind="text: model.acceptMessage, visible: material.isValidEmail() == true"></div>
+											</div>
+										</div>										
 										<div class="col-md-6 col-12">
 											<div class="form-group">
 												<label for="first-name-vertical">price</label>
-												<input type="text" name="txtprice" data-bind="value: price" id="" required="" class="form-control">
+												<input type="number" name="txtprice" data-bind="value: price, validate: price" id="" class="form-control">
+												<div class="error" data-bind="text: price.error, visible: price.error"></div>
 											</div>
 										</div>
 
 										<div class="col-md-6 col-12">
 											<div class="form-group">
 												<label for="first-name-vertical">stock</label>
-												<input type="text" name="txtstock" data-bind="value: stock" id="" required="" class="form-control">
+												<input type="number" name="txtstock" data-bind="value: stock, validate: stock" id="" class="form-control">
+												<div class="error" data-bind="text: stock.error, visible: stock.error"></div>
+											</div>
+										</div>
+
+										<!-- <div class="col-md-6 col-12">
+											<div class="form-group">
+												<label for="first-name-vertical">Hobies With Token : </label>
+												<input type="text" name="hobiesToken" data-bind="" class="form-control">
+											</div>
+										</div> -->
+										
+										<div class="col-md-6 col-12"> 
+											<div class="form-group">
+												<label for="first-name-vertical">Hobi</label>
+												<select data-bind="
+													options: select,
+													optionsText: 'name',
+													optionsValue: 'hoby_id',
+													value:hoby_id" class="form-control">
+												</select>
 											</div>
 										</div>
 
 										<div class="col-md-6 col-12">
-
-									{{-- <div class="form-group">
-										<label for="first-name-vertical">JENIS PAKET</label>
-										<select name="txtJENIS_PAKET" data-bind="
-										options: select,
-										optionsText: 'name',
-										optionsValue: 'id',
-										value:idselect" class="form-control">
-									</select>
-
-								</div> --}}
-
-										<div class="col-md-12 col-12">
 											<div class="form-group">
 												<label for="first-name-vertical">description</label>
-												<input type="text" name="txtdescription" data-bind="value: description" id="" required="" class="form-control">
+												<input type="text" name="txtdescription" data-bind="value: description, validate: description" id="" class="form-control">
+												<div class="error" data-bind="text: description.error, visible: description.error"></div>
 											</div>
 										</div>
-
-									</div>
+						 
 								</div>
 							</div>
 							<!-- ./ END FORM -->
-
 						</div>
+					</div>
+					<!-- data table -->
 						<div class="tab-pane fade" id="tablist" role="tabpanel" aria-labelledby="profile-tab">
 							<section id="basic-datatable" >
-
 								<div class="row" data-bind="with: material">
 									<!-- filter -->
 									<div class="col-sm-3 col-md-3 margFilter">
@@ -268,59 +365,55 @@ $.ajax({
 											optionsValue: 'value',
 											value:FilterValue"
 											class="form-control" id="basicSelect">
-										</select>
-									</fieldset>
-								</div>
-								<div class="col-sm-3 col-md-3 margFilter">
-									<div class="form-group ">
-										<input data-bind="value:FilterText" id="" placeholder="Filter by data" class="form-control">
+											</select>
+										</fieldset>
+									</div>
+									<div class="col-sm-3 col-md-3 margFilter">
+										<div class="form-group ">
+											<input data-bind="value:FilterText" id="" placeholder="Filter by data" class="form-control">
+										</div>
+									</div>
+									<div class="col-sm-3 col-md-3 margFilter">
+										<div class="form-group ">
+											<button class="btn btn-md btn-danger" data-bind="click:filterreset">
+												<span class="icon">
+													<svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+														<path d="M19.3248 9.46826C19.3248 9.46826 18.7818 16.2033 18.4668 19.0403C18.3168 20.3953 17.4798 21.1893 16.1088 21.2143C13.4998 21.2613 10.8878 21.2643 8.27979 21.2093C6.96079 21.1823 6.13779 20.3783 5.99079 19.0473C5.67379 16.1853 5.13379 9.46826 5.13379 9.46826" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+														<path d="M20.708 6.23975H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+														<path d="M17.4406 6.23973C16.6556 6.23973 15.9796 5.68473 15.8256 4.91573L15.5826 3.69973C15.4326 3.13873 14.9246 2.75073 14.3456 2.75073H10.1126C9.53358 2.75073 9.02558 3.13873 8.87558 3.69973L8.63258 4.91573C8.47858 5.68473 7.80258 6.23973 7.01758 6.23973" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>                                </svg>
+												</span>
+											</button>
+											<button class="btn btn-md btn-primary" data-bind="click:filtermaterial">
+												<span class="icon">
+													<svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+														<circle cx="11.7669" cy="11.7666" r="8.98856" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></circle>
+														<path d="M18.0186 18.4851L21.5426 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+													</svg>
+												</span>
+											</button>
+										</div>
+									</div>
+									<!-- ./filter -->
+									<div class="col-12">
+										<div class="table-responsive animated fadeIn" >
+											<table id="myTable" width="100%" class="table table-striped dataTable" >
+												<thead>
+													<tr>
+														<th >name</th>
+														<th >price</th>
+														<th >stock</th>
+														<th >email</th>
+														<th >description</th>
+														<th >ACTION</th>
+													</tr>
+												</thead>
+											</table>
+										</div>
 									</div>
 								</div>
-								<div class="col-sm-3 col-md-3 margFilter">
-									<div class="form-group ">
-										<button class="btn btn-md btn-danger" data-bind="click:filterreset">
-											<span class="icon">
-												<svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-													<path d="M19.3248 9.46826C19.3248 9.46826 18.7818 16.2033 18.4668 19.0403C18.3168 20.3953 17.4798 21.1893 16.1088 21.2143C13.4998 21.2613 10.8878 21.2643 8.27979 21.2093C6.96079 21.1823 6.13779 20.3783 5.99079 19.0473C5.67379 16.1853 5.13379 9.46826 5.13379 9.46826" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-													<path d="M20.708 6.23975H3.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-													<path d="M17.4406 6.23973C16.6556 6.23973 15.9796 5.68473 15.8256 4.91573L15.5826 3.69973C15.4326 3.13873 14.9246 2.75073 14.3456 2.75073H10.1126C9.53358 2.75073 9.02558 3.13873 8.87558 3.69973L8.63258 4.91573C8.47858 5.68473 7.80258 6.23973 7.01758 6.23973" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>                                </svg>
-											</span>
-										</button>
-										<button class="btn btn-md btn-primary" data-bind="click:filtermaterial">
-											<span class="icon">
-												<svg class="icon-20" width="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-													<circle cx="11.7669" cy="11.7666" r="8.98856" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></circle>
-													<path d="M18.0186 18.4851L21.5426 22" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
-												</svg>
-											</span>
-										</button>
-									</div>
-								</div>
-								<!-- ./filter -->
-								<div class="col-12">
-									<div class="table-responsive animated fadeIn" >
-										<table id="myTable" width="100%" class="table table-striped zero-configuration">
-											<thead>
-												<tr>
-													<th >name</th>
-													<th >price</th>
-													<th >stock</th>
-													<th >description</th>
-													<th >ACTION</th>
-												</tr>
-											</thead>
-										</table>
-									</div>
-								</div>
-							</div>
-						</section>
-					</div>
-				</div>
-
-
-
-
-
+							</section>
+						</div>
+					<!-- end data table -->
 			</div>
 		</div>
 	</div>
@@ -335,7 +428,6 @@ material.filterreset = function() {
 	material.FilterText('');
 	material.grid.ajax.reload();
 }
-
 material.checkAksesHalaman = function(){
 	var URL = document.URL;
 	var arr=URL.split('/'); //arr[0]='http' //arr[1]='' //arr[2]='name projek' //arr[3]='name of page'
@@ -353,15 +445,20 @@ material.checkAksesHalaman = function(){
 }
 $(document).ready(function(){
 	// material.checkAksesHalaman();
-	material.functionSelect();
-	material.grid = $("#myTable").DataTable({
+	material.functionSelectHobies();
+	// material.drawHobies();
+	// console.log('Current data:', material.getSelectHobi());
+	material.grid = $('#myTable').DataTable({
+		'paging': false,
+		'retrieve': true,
+    	'searching': false,
 		"processing": true,
 		"serverSide": true,
 		"ordering": false,
 		"bLengthChange": false,
 		"bInfo": true,
 		"ajax": {
-			"url": material.url_dir()+"/getDataAll",
+			"url": "/product/getDataAll",
 			"type": "POST",
 			"data": function(d){
 				d['filtervalue'] = material.FilterValue();
@@ -384,6 +481,7 @@ $(document).ready(function(){
 			{"data": "name"},
 			{"data": "price"},
 			{"data": "stock"},
+			{"data": "email"},
 			{"data": "description"},
 			{
 				"data": "id",
